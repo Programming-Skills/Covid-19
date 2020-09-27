@@ -87,7 +87,9 @@ api_in_map <- result %>%
   filter(name %in% regional_names) %>% 
   ungroup() 
 
-api_in_map <- api_in_map[match(regional_names[y], api_in_map$name),]
+b <- which(regional_names %in% api_in_map$name)
+
+api_in_map <- api_in_map[match(regional_names[b], api_in_map$name),]
 
 a <- seq(1:length(regional_names))
 
@@ -99,7 +101,33 @@ for(i in seq_along(c)){
   api_in_map <- add_row(api_in_map, .after = (setdiff(a,b)-1)[i])
 }
 
-api_in_map <- tidyr::replace_na(api_in_map, list(daily = "Unknown", cumulative = "Unknown"))
+api_in_map <- tidyr::replace_na(api_in_map, list(daily = "Data Not Available", cumulative = "Data Not Available"))
 
 api_in_map
 
+ui <- fillPage(
+  tags$style(type = "text/css", "html, body {width:100%; height:100%}"),
+  leafletOutput("my_leaf", width = "100%", height = "100%")
+)
+
+server <- function(input, output, session){
+  
+  output$my_leaf <- renderLeaflet({
+    
+    # creating a colour palette that provides a diff colour for regions
+    # in different country i.e., Scotland, Ireland, Wales, etc.  
+    pal <- colorFactor("Blues", uk$GID_2)
+    leaflet(uk) %>% 
+      addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
+                  opacity = 1.0, fillOpacity = 0.5,
+                  fillColor = ~pal(GID_2),
+                  highlightOptions = highlightOptions(color = "white", weight =2,
+                                                      bringToFront = TRUE),
+                  label = ~paste0(NAME_2, ", ", NAME_1, ", Daily Cases ", api_in_map$daily, ", Cumulative Cases ", api_in_map$cumulative))  
+    
+  })
+
+  
+}
+
+shinyApp(ui, server)
