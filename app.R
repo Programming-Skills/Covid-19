@@ -225,7 +225,7 @@ server <- function(input, output, session){
                                 "Date: ", api_in_map_2nd_day$date, "<br>",
                                 "Daily Cases: ", api_in_map_2nd_day$daily, "<br>",
                                 "Cumulative Cases: ", api_in_map_2nd_day$cumulative, "<br><br>",
-                                "Percentage Change on Previous days' Daily Cases: ", daily_percent_change$percent, "%", "<br><br>",
+                                "Change in Daily Cases: ", daily_percent_change$percent, "%", "<br><br>",
                                 "Date: ", api_in_map_3rd_day$date, "<br>",
                                 "Daily Cases: ", api_in_map_3rd_day$daily, "<br>",
                                 "Cumulative Cases: ", api_in_map_3rd_day$cumulative, "<br>"))  
