@@ -1,4 +1,5 @@
 source("libraries.R")
+source('make_equivalent_df.R')
 
 ### Section 1: Read & clean data ###
 
@@ -87,6 +88,16 @@ regional_names <- uk$NAME_2
 
 # 1.2. Preprocessing
 
+# # Latest info
+api_in_map_1st_day <- make_equivalent_df(data1 = result, n = 1, data2 = regional_names)
+
+# Day before
+api_in_map_2nd_day <- make_equivalent_df(data1 = result, n = 2, data2 = regional_names)
+
+# Two days before
+api_in_map_3rd_day <- make_equivalent_df(data1 = result, n = 3, data2 = regional_names)
+
+# Calculate percentage change between previous 2nd and 3rd days. 
 api_in_map_top_3_days <- result %>% 
   group_by(name) %>% 
   top_n(3, date) %>% 
@@ -123,79 +134,6 @@ for(i in seq_along(c)){
 
 daily_percent_change <- tidyr::replace_na(daily_percent_change, list(name = "Data Not Available", percent = "Data Not Available"))
 
-
-# Latest info
-api_in_map <- result %>% 
-  group_by(name) %>% 
-  top_n(1, date) %>% 
-  filter(name %in% regional_names) %>% 
-  ungroup() 
-
-# Code to match the dimensions of the API and the map dataframe
-e <- which(regional_names %in% api_in_map$name)
-
-api_in_map <- api_in_map[match(regional_names[e], api_in_map$name),]
-
-d <- seq(1:length(regional_names))
-
-f <- setdiff(d,e)
-
-for(i in seq_along(f)){
-  api_in_map <- add_row(api_in_map, .after = (setdiff(d,e)-1)[i])
-}
-
-api_in_map <- tidyr::replace_na(api_in_map, list(date = "Data Not Available", 
-                                                 daily = "Data Not Available", 
-                                                 cumulative = "Data Not Available"))
-
-# Day before
-api_in_map_2nd_day <- api_in_map_top_3_days %>% 
-  group_by(name) %>% 
-  filter(row_number() %in% c(2)) %>% 
-  ungroup()
-
-# Code to match the dimensions of the API and the map dataframe
-h <- which(regional_names %in% api_in_map_2nd_day$name)
-
-api_in_map_2nd_day <- api_in_map_2nd_day[match(regional_names[b], api_in_map_2nd_day$name),]
-
-g <- seq(1:length(regional_names))
-
-i <- setdiff(g,h)
-
-for(i in seq_along(i)){
-  api_in_map_2nd_day <- add_row(api_in_map_2nd_day, .after = (setdiff(g,h)-1)[i])
-}
-
-api_in_map_2nd_day <- tidyr::replace_na(api_in_map_2nd_day, list(date = "Data Not Available", 
-                                                 daily = "Data Not Available", 
-                                                 cumulative = "Data Not Available"))
-
-
-# Two days before
-api_in_map_3rd_day <- api_in_map_top_3_days %>% 
-  group_by(name) %>% 
-  filter(row_number() %in% c(3)) %>% 
-  ungroup()
-
-# Code to match the dimensions of the API and the map dataframe
-k <- which(regional_names %in% api_in_map_3rd_day$name)
-
-api_in_map_3rd_day <- api_in_map_3rd_day[match(regional_names[b], api_in_map_3rd_day$name),]
-
-j <- seq(1:length(regional_names))
-
-l <- setdiff(a,b)
-
-for(i in seq_along(l)){
-  api_in_map_3rd_day <- add_row(api_in_map_3rd_day, .after = (setdiff(j,k)-1)[i])
-}
-
-api_in_map_3rd_day <- tidyr::replace_na(api_in_map_3rd_day, list(date = "Data Not Available", 
-                                                                 daily = "Data Not Available", 
-                                                                 cumulative = "Data Not Available"))
-
-
 ### Section 2. Make app ###
 
 ui <- fillPage(
@@ -219,9 +157,9 @@ server <- function(input, output, session){
                   label = ~paste0(NAME_2, ",", NAME_1),
                   popup = ~paste0("<div style='font-size: 15px'><b><h5>",
                                 NAME_2, ", ", NAME_1, "</h1></b>",
-                                "Date: ", api_in_map$date, "<br>",
-                                "Daily Cases: ", api_in_map$daily, "<br>",
-                                "Cumulative Cases: ", api_in_map$cumulative, "<br><br>",
+                                "Date: ", api_in_map_1st_day$date, "<br>",
+                                "Daily Cases: ", api_in_map_1st_day$daily, "<br>",
+                                "Cumulative Cases: ", api_in_map_1st_day$cumulative, "<br><br>",
                                 "Date: ", api_in_map_2nd_day$date, "<br>",
                                 "Daily Cases: ", api_in_map_2nd_day$daily, "<br>",
                                 "Cumulative Cases: ", api_in_map_2nd_day$cumulative, "<br><br>",
