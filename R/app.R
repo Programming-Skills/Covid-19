@@ -1,9 +1,10 @@
 source("libraries.R")
 source('make_equivalent_df.R')
+source('get_percentage_change.R')
 
 ### Section 1: Read & clean data ###
 
-# Read API data from 
+# Read API data 
 
 #' Extracts paginated data by requesting all of the pages
 #' and combining the results.
@@ -75,13 +76,7 @@ query_structure <- list(
 
 result <- get_paginated_data(query_filters, query_structure)
 
-list(
-  "Shape"                = dim(result),
-  "Data (first 3 items)" = result[0:100,]
-) -> report
-
-
-
+# Read leafet msp data
 uk <- getData('GADM', country='GBR', level = 2) 
 national_names <- uk$NAME_1
 regional_names <- uk$NAME_2
@@ -95,44 +90,10 @@ api_in_map_1st_day <- make_equivalent_df(data1 = result, n = 1, data2 = regional
 api_in_map_2nd_day <- make_equivalent_df(data1 = result, n = 2, data2 = regional_names)
 
 # Two days before
-api_in_map_3rd_day <- make_equivalent_df(data1 = result, n = 3, data2 = regional_names)
+api_in_map_3rd_day <- make_equivalent_df(data1 = result, data2 = regional_names, n = 3)
 
 # Calculate percentage change between previous 2nd and 3rd days. 
-api_in_map_top_3_days <- result %>% 
-  group_by(name) %>% 
-  top_n(3, date) %>% 
-  filter(name %in% regional_names) %>% 
-  ungroup() 
-
-api_in_map_2nd_day_ <- api_in_map_top_3_days %>% 
-  group_by(name) %>% 
-  filter(row_number() %in% c(2)) %>% 
-  ungroup()
-
-api_in_map_3rd_day_ <- api_in_map_top_3_days %>% 
-  group_by(name) %>% 
-  filter(row_number() %in% c(3)) %>% 
-  ungroup()
-
-daily_percent_change <- api_in_map_3rd_day_ %>% 
-  left_join(api_in_map_2nd_day_, by = "name") %>% 
-  mutate(percent = signif(((daily.y-daily.x)/daily.x)*100, 2)) %>% 
-  dplyr::select(name, percent)
-
-# Code to match the dimensions of the API and the map dataframe
-b <- which(regional_names %in% daily_percent_change$name)
-
-daily_percent_change <- daily_percent_change[match(regional_names[b], daily_percent_change$name),]
-
-a <- seq(1:length(regional_names))
-
-c <- setdiff(a,b)
-
-for(i in seq_along(c)){
-  daily_percent_change <- add_row(daily_percent_change, .after = (setdiff(a,b)-1)[i])
-}
-
-daily_percent_change <- tidyr::replace_na(daily_percent_change, list(name = "Data Not Available", percent = "Data Not Available"))
+daily_percent_change <- get_percentage_change(data1 = result, data2 = regional_names, n1 = 2, n2 = 3)
 
 ### Section 2. Make app ###
 

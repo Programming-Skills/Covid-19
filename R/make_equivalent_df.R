@@ -1,8 +1,8 @@
-make_equivalent_df <- function(data1, n, data2){
+make_equivalent_df <- function(data1, data2, n){
   "Args: 
         data1 is the GOV.uk Covid-19 API data.
-        n is the number of days the user wants to include in the results.
         data2 is the leafet map regional data.
+        n is the number of days ago the user wants the data for.
   Result:
         returns a df with the regions matching in the API and leafet map data (missing data is filled with 'Data Not Available')
   "
